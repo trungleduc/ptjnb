@@ -1,0 +1,16 @@
+# Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
+_commit: v4.5.1
+_src_path: https://github.com/jupyterlab/extension-template
+author_email: derthorsten@gmail.com
+author_name: ptjnb
+has_ai_rules: false
+has_binder: false
+has_settings: false
+kind: frontend
+labextension_name: ptjnb
+project_short_description: A JupyterLab extension to convert plaintext files to jupyter
+    notebooks
+python_name: ptjnb
+repository: https://github.com/DerThorsten/ptjnb
+test: true
+
