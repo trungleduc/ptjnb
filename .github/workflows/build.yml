@@ -4,7 +4,7 @@ on:
   push:
     branches: main
   pull_request:
-    branches: '*'
+    branches: "*"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -15,74 +15,74 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Base Setup
-      uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+      - name: Base Setup
+        uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
 
-    - name: Install dependencies
-      run: python -m pip install -U "jupyterlab>=4.0.0,<5"
+      - name: Install dependencies
+        run: python -m pip install -U "jupyterlab>=4.0.0,<5"
 
-    - name: Lint the extension
-      run: |
-        set -eux
-        jlpm
-        jlpm run lint:check
+      - name: Lint the extension
+        run: |
+          set -eux
+          jlpm
+          jlpm run lint:check
 
-    - name: Test the extension
-      run: |
-        set -eux
-        jlpm run test
+      - name: Test the extension
+        run: |
+          set -eux
+          jlpm run test
 
-    - name: Build the extension
-      run: |
-        set -eux
-        python -m pip install .[test]
+      - name: Build the extension
+        run: |
+          set -eux
+          python -m pip install .[test]
 
-        jupyter labextension list
-        jupyter labextension list 2>&1 | grep -ie "ptjnb.*OK"
-        python -m jupyterlab.browser_check
+          jupyter labextension list
+          jupyter labextension list 2>&1 | grep -ie "ptjnb.*OK"
+          python -m jupyterlab.browser_check
 
-    - name: Package the extension
-      run: |
-        set -eux
+      - name: Package the extension
+        run: |
+          set -eux
 
-        pip install build
-        python -m build
-        pip uninstall -y "ptjnb" jupyterlab
+          pip install build
+          python -m build
+          pip uninstall -y "ptjnb" jupyterlab
 
-    - name: Upload extension packages
-      uses: actions/upload-artifact@v4
-      with:
-        name: extension-artifacts
-        path: dist/ptjnb*
-        if-no-files-found: error
+      - name: Upload extension packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: extension-artifacts
+          path: dist/ptjnb*
+          if-no-files-found: error
 
   test_isolated:
     needs: build
     runs-on: ubuntu-latest
 
     steps:
-    - name: Install Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.10'
-        architecture: 'x64'
-    - uses: actions/download-artifact@v4
-      with:
-        name: extension-artifacts
-    - name: Install and Test
-      run: |
-        set -eux
-        sudo rm -rf $(which node)
-        sudo rm -rf $(which node)
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          architecture: "x64"
+      - uses: actions/download-artifact@v4
+        with:
+          name: extension-artifacts
+      - name: Install and Test
+        run: |
+          set -eux
+          sudo rm -rf $(which node)
+          sudo rm -rf $(which node)
 
-        pip install "jupyterlab>=4.0.0,<5" ptjnb*.whl
+          pip install "jupyterlab>=4.0.0,<5" ptjnb*.whl
 
-        jupyter labextension list
-        jupyter labextension list 2>&1 | grep -ie "ptjnb.*OK"
-        python -m jupyterlab.browser_check --no-browser-test
+          jupyter labextension list
+          jupyter labextension list 2>&1 | grep -ie "ptjnb.*OK"
+          python -m jupyterlab.browser_check --no-browser-test
 
   build-lite:
     name: Build JupyterLite
@@ -90,54 +90,54 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Install Conda environment with Micromamba
-      uses: mamba-org/setup-micromamba@v1
-      with:
-        micromamba-version: '1.5.5-0'
-        environment-name: build-env
-        create-args: >-
-          python=3.10
-          pip=24.0
-          jupyterlab
-          jupyterlite-core
-          jupyterlite-xeus>=4.4.0
+      - name: Install Conda environment with Micromamba
+        uses: mamba-org/setup-micromamba@v1
+        with:
+          micromamba-version: "1.5.5-0"
+          environment-name: build-env
+          create-args: >-
+            python=3.10
+            pip=24.0
+            jupyterlab
+            jupyterlite-core
+            jupyterlite-xeus>=4.4.0
 
-    - name: Download extension package
-      uses: actions/download-artifact@v4
-      with:
-        name: extension-artifacts
+      - name: Download extension package
+        uses: actions/download-artifact@v4
+        with:
+          name: extension-artifacts
 
-    - name: Install the extension
-      shell: bash -l {0}
-      run: |
-        set -eux
-        mkdir dist
-        mv ptjnb*.whl dist/ptjnb-0.0.0-py3-none-any.whl
-        python -m pip install dist/ptjnb*.whl
+      - name: Install the extension
+        shell: bash -l {0}
+        run: |
+          set -eux
+          mkdir dist
+          mv ptjnb*.whl dist/ptjnb-0.0.0-py3-none-any.whl
+          python -m pip install dist/ptjnb*.whl
 
-    - name: Build the lite site
-      shell: bash -l {0}
-      working-directory: demo
-      run: |
-        set -eux
-        jupyter lite build .
+      - name: Build the lite site
+        shell: bash -l {0}
+        working-directory: demo
+        run: |
+          set -eux
+          jupyter lite build .
 
-    - name: Upload artifact
-      if: github.ref == 'refs/heads/main'
-      uses: actions/upload-pages-artifact@v3
-      with:
-        path: ./demo/_output
-        retention-days: 30
+      - name: Upload artifact
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./demo/_output
+          retention-days: 30
 
-    - name: Upload artifact for PR
-      if: github.event_name == 'pull_request'
-      uses: actions/upload-artifact@v4
-      with:
-        name: jupyterlite-build-asset
-        path: ./demo/_output
+      - name: Upload artifact for PR
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: jupyterlite-build-asset
+          path: ./demo/_output
 
   ui-tests-lite:
     name: UI tests (JupyterLite)
@@ -146,37 +146,37 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - uses: actions/download-artifact@v4
-      with:
-        name: jupyterlite-build-asset
-        path: ./demo/_output
+      - uses: actions/download-artifact@v4
+        with:
+          name: jupyterlite-build-asset
+          path: ./demo/_output
 
-    - name: Serve JupyterLite
-      run: |
-        set -eux
-        python -m http.server 4477 --directory ./demo/_output &
+      - name: Serve JupyterLite
+        run: |
+          set -eux
+          python -m http.server 4477 --directory ./demo/_output &
 
-    - name: Base Setup
-      uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
+      - name: Base Setup
+        uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
 
-    - name: Run UI tests
-      working-directory: ./ui-tests
-      run: |
-        set -eux
-        jlpm install
-        jlpm playwright install chromium
-        jlpm playwright test
+      - name: Run UI tests
+        working-directory: ./ui-tests
+        run: |
+          set -eux
+          npm install
+          npx playwright install chromium
+          npx playwright test
 
-    - name: Upload Playwright report
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: ptjnb-lite-playwright-tests
-        path: |
-          ui-tests/test-results
-          ui-tests/playwright-report
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ptjnb-lite-playwright-tests
+          path: |
+            ui-tests/test-results
+            ui-tests/playwright-report
 
   deploy:
     needs: build-lite
@@ -191,9 +191,9 @@ jobs:
 
     runs-on: ubuntu-latest
     steps:
-    - name: Deploy to GitHub Pages
-      id: deployment
-      uses: actions/deploy-pages@v4
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
 
   check_links:
     name: Check Links
