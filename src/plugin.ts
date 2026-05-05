@@ -2,21 +2,25 @@ import {
   JupyterFrontEnd,
   JupyterFrontEndPlugin
 } from '@jupyterlab/application';
+import { DocumentRegistry } from '@jupyterlab/docregistry';
 import { showDialog, Dialog } from '@jupyterlab/apputils';
 import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
 import { PageConfig } from '@jupyterlab/coreutils';
 import { MenuSvg } from '@jupyterlab/ui-components';
-import { PARSERS, PARSER_LABELS, PARSER_EXTENSIONS, SERIALIZERS } from './parsers';
 import {
+  PARSERS,
+  PARSER_LABELS,
+  PARSER_EXTENSIONS,
+  SERIALIZERS,
+  CONTEXT_MENU_LABELS
+} from './parsers';
+import type {
   ParserName,
   IPlainTextNotebookConfig,
   IKernelspec
 } from './parsers';
 import { convertFile, autoConvert } from './convert';
-import {
-  NotebookPanel,
-  NotebookWidgetFactory
-} from '@jupyterlab/notebook';
+import { NotebookPanel, NotebookWidgetFactory } from '@jupyterlab/notebook';
 import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 import { IEditorServices } from '@jupyterlab/codeeditor';
 import { PlainTextNotebookModelFactory } from './model';
@@ -37,7 +41,6 @@ export const plugin: JupyterFrontEndPlugin<void> = {
     contentFactory: NotebookPanel.IContentFactory,
     editorServices: IEditorServices
   ) => {
-    console.log('ptjnb extension activated!');
     const { commands, contextMenu } = app;
 
     const cfgStr = PageConfig.getOption('plainTextNotebookConfig');
@@ -52,38 +55,49 @@ export const plugin: JupyterFrontEndPlugin<void> = {
     const getCurrentBrowser = () => browserFactory.tracker.currentWidget;
 
     (Object.keys(PARSERS) as ParserName[]).forEach(parserName => {
-      const commandId = `ptjnb:convert-${parserName}`;
+      const convertCommandId = `ptjnb:convert-${parserName}`;
       const parser = PARSERS[parserName];
       const exts = PARSER_EXTENSIONS[parserName];
       const serializer = SERIALIZERS[parserName];
-      const fileTypes = exts.includes('.py') ? ['python'] : ['markdown'];
-      const modelName = `ptjnb-${parserName}`;
-      const mimeTypeService = editorServices.mimeTypeService;
 
-      const modelFactory = new PlainTextNotebookModelFactory({
-        name: modelName,
-        parser,
-        serializer
+      // Names must be lowercase because preferredWidgetFactories is case sensitive
+      const fileTypeName = `ptjnb-${parserName}`.toLowerCase();
+      const modelName = `ptjnb-model-${parserName}`.toLowerCase();
+      const widgetFactoryName = CONTEXT_MENU_LABELS[parserName];
+
+      // Register file type so our widget factory appears in the "open with" menu
+      app.docRegistry.addFileType({
+        name: fileTypeName,
+        extensions: exts,
+        contentType: 'file',
+        fileFormat: 'text'
       });
-      app.docRegistry.addModelFactory(modelFactory);
 
-      const widgetFactory = new NotebookWidgetFactory({
-        name: PARSER_LABELS[parserName],
-        modelName: modelName,
-        fileTypes: fileTypes,
-        rendermime,
-        contentFactory,
-        mimeTypeService,
-        defaultFor: []
+      app.docRegistry.addModelFactory(
+        new PlainTextNotebookModelFactory({ name: modelName, parser, serializer })
+      );
+
+      app.docRegistry.addWidgetFactory(
+        new NotebookWidgetFactory({
+          name: widgetFactoryName,
+          modelName,
+          fileTypes: [fileTypeName],
+          defaultFor: [],
+          rendermime,
+          contentFactory,
+          mimeTypeService: editorServices.mimeTypeService
+        }) as unknown as DocumentRegistry.WidgetFactory
+      );
+
+      // Copy toolbar and other widget extensions from the standard Notebook
+      // factory. Deferred until after app.restored so all extensions are loaded.
+      void app.restored.then(() => {
+        for (const ext of app.docRegistry.widgetExtensions('Notebook')) {
+          app.docRegistry.addWidgetExtension(widgetFactoryName, ext);
+        }
       });
-      app.docRegistry.addWidgetFactory(widgetFactory);
 
-      // Inherit the toolbar and other widget extensions from the standard Notebook widget
-      for (const ext of app.docRegistry.widgetExtensions('Notebook')) {
-        app.docRegistry.addWidgetExtension(widgetFactory.name, ext);
-      }
-
-      commands.addCommand(commandId, {
+      commands.addCommand(convertCommandId, {
         label: PARSER_LABELS[parserName],
         isVisible: () => {
           const browser = getCurrentBrowser();
@@ -139,16 +153,16 @@ export const plugin: JupyterFrontEndPlugin<void> = {
       });
     });
 
-    const submenu = new MenuSvg({ commands });
-    submenu.title.label = 'Convert to Notebook';
-    submenu.addItem({ command: 'ptjnb:convert-parsePy' });
-    submenu.addItem({ command: 'ptjnb:convert-parseSphinxGallery' });
-    submenu.addItem({ command: 'ptjnb:convert-parseClassicMd' });
-    submenu.addItem({ command: 'ptjnb:convert-parseMystMd' });
+    const convertSubmenu = new MenuSvg({ commands });
+    convertSubmenu.title.label = 'Convert to Notebook';
+    convertSubmenu.addItem({ command: 'ptjnb:convert-parsePy' });
+    convertSubmenu.addItem({ command: 'ptjnb:convert-parseSphinxGallery' });
+    convertSubmenu.addItem({ command: 'ptjnb:convert-parseClassicMd' });
+    convertSubmenu.addItem({ command: 'ptjnb:convert-parseMystMd' });
 
     contextMenu.addItem({
       type: 'submenu',
-      submenu,
+      submenu: convertSubmenu,
       selector: '.jp-DirListing-item[data-isdir="false"]',
       rank: 10
     });

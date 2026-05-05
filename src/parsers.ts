@@ -6,9 +6,9 @@ import {
   toPy,
   toSphinxGallery,
   toClassicMd,
-  toMystMd,
-  Notebook
+  toMystMd
 } from 'plainb';
+import type { Notebook } from 'plainb';
 
 export type ParserName =
   | 'parsePy'
@@ -42,7 +42,7 @@ export const PARSERS: Record<ParserName, (text: string) => object> = {
 export const SERIALIZERS: Record<ParserName, (notebook: Notebook) => string> = {
   parsePy: toPy,
   parseSphinxGallery: toSphinxGallery,
-  parseClassicMd: (nb) => toClassicMd(nb), // classic markdown doesn't have a default language, though plainb might fallback to python. Wait, toClassicMd takes (notebook: Notebook, language?: string). If we just pass `nb`, it uses default python.
+  parseClassicMd: toClassicMd,
   parseMystMd: toMystMd
 };
 
@@ -58,4 +58,11 @@ export const PARSER_EXTENSIONS: Record<ParserName, string[]> = {
   parseSphinxGallery: ['.py'],
   parseClassicMd: ['.md'],
   parseMystMd: ['.md']
+};
+
+export const CONTEXT_MENU_LABELS: Record<ParserName, string> = {
+  parsePy: 'Notebook (Percent .py)',
+  parseSphinxGallery: 'Notebook (Sphinx Gallery .py)',
+  parseClassicMd: 'Notebook (Classic Markdown .md)',
+  parseMystMd: 'Notebook (MyST .md)'
 };
