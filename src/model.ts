@@ -37,7 +37,10 @@ export class PlainTextNotebookModel extends NotebookModel {
             i < lines.length - 1 ? line + '\n' : line
           );
           // Remove a trailing empty string produced if source ends with \n
-          if (cell.source.length > 1 && cell.source[cell.source.length - 1] === '') {
+          if (
+            cell.source.length > 1 &&
+            cell.source[cell.source.length - 1] === ''
+          ) {
             cell.source.pop();
           }
         }
@@ -49,12 +52,11 @@ export class PlainTextNotebookModel extends NotebookModel {
 
   fromString(value: string): void {
     const notebook = this._parser(value) as any;
-    
+
     // Ensure kernelspec is set, otherwise default JupyterLab notebook widget might fail to start
     if (!notebook.metadata?.kernelspec) {
       notebook.metadata = notebook.metadata ?? {};
-      const kernelspec =
-        extractKernelspecFromText(value) ?? DEFAULT_KERNELSPEC;
+      const kernelspec = extractKernelspecFromText(value) ?? DEFAULT_KERNELSPEC;
       notebook.metadata.kernelspec = kernelspec;
       if (!notebook.metadata.language_info) {
         notebook.metadata.language_info = { name: kernelspec.language };

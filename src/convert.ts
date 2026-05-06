@@ -1,4 +1,5 @@
 import type { Contents } from '@jupyterlab/services';
+import type { Notebook } from 'plainb';
 import { PARSERS } from './parsers';
 import type { IRule, IKernelspec } from './parsers';
 
@@ -100,6 +101,50 @@ export async function convertFile(
     type: 'notebook',
     format: 'json',
     content: notebook
+  });
+}
+
+/**
+ * Convert a .ipynb notebook to a plain text format using a serializer.
+ */
+export async function convertNotebookToPlainText(
+  contents: Contents.IManager,
+  notebookPath: string,
+  serializer: (notebook: Notebook) => string,
+  targetExtension: string
+): Promise<void> {
+  const model = await contents.get(notebookPath, {
+    type: 'notebook',
+    format: 'json',
+    content: true
+  });
+  const notebook = model.content as any;
+
+  // Normalize cell sources to string[] as expected by plainb serializers.
+  // The contents API may return source as either string or string[].
+  if (notebook.cells) {
+    for (const cell of notebook.cells) {
+      if (typeof cell.source === 'string') {
+        const lines = cell.source.split('\n');
+        cell.source = lines.map((line: string, i: number) =>
+          i < lines.length - 1 ? line + '\n' : line
+        );
+        if (
+          cell.source.length > 1 &&
+          cell.source[cell.source.length - 1] === ''
+        ) {
+          cell.source.pop();
+        }
+      }
+    }
+  }
+
+  const text = serializer(notebook as Notebook);
+  const plainPath = notebookPath.replace(/\.ipynb$/, targetExtension);
+  await contents.save(plainPath, {
+    type: 'file',
+    format: 'text',
+    content: text
   });
 }
 

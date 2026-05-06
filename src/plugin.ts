@@ -24,7 +24,11 @@ import type {
   IPlainTextNotebookConfig,
   IKernelspec
 } from './parsers';
-import { convertFile, autoConvert } from './convert';
+import {
+  convertFile,
+  convertNotebookToPlainText,
+  autoConvert
+} from './convert';
 import {
   INotebookTracker,
   NotebookPanel,
@@ -114,7 +118,11 @@ export const plugin: JupyterFrontEndPlugin<void> = {
       });
 
       app.docRegistry.addModelFactory(
-        new PlainTextNotebookModelFactory({ name: modelName, parser, serializer })
+        new PlainTextNotebookModelFactory({
+          name: modelName,
+          parser,
+          serializer
+        })
       );
 
       const widgetFactory = new NotebookWidgetFactory({
@@ -224,6 +232,86 @@ export const plugin: JupyterFrontEndPlugin<void> = {
       submenu: convertSubmenu,
       selector: '.jp-DirListing-item[data-isdir="false"]',
       rank: 10
+    });
+
+    // Reverse conversion: .ipynb to plain text
+
+    (Object.keys(SERIALIZERS) as ParserName[]).forEach(parserName => {
+      const exportCommandId = `ptjnb:export-${parserName}`;
+      const serializer = SERIALIZERS[parserName];
+      const targetExt = PARSER_EXTENSIONS[parserName][0];
+
+      commands.addCommand(exportCommandId, {
+        label: PARSER_LABELS[parserName],
+        isVisible: () => {
+          const browser = getCurrentBrowser();
+          if (!browser) {
+            return false;
+          }
+          const selection = browser.selectedItems();
+          const first = selection.next();
+          if (first.done || !first.value) {
+            return false;
+          }
+          return first.value.path.endsWith('.ipynb');
+        },
+        execute: async () => {
+          const browser = getCurrentBrowser();
+          if (!browser) {
+            return;
+          }
+          const selection = browser.selectedItems();
+          const first = selection.next();
+          if (first.done || !first.value) {
+            return;
+          }
+          const notebookPath = first.value.path;
+          const plainPath = notebookPath.replace(/\.ipynb$/, targetExt);
+          const contents = app.serviceManager.contents;
+          try {
+            let fileExists = false;
+            try {
+              await contents.get(plainPath, { content: false });
+              fileExists = true;
+            } catch {}
+            if (fileExists) {
+              const result = await showDialog({
+                title: 'Overwrite file?',
+                body: `"${plainPath}" already exists. Overwrite it?`,
+                buttons: [
+                  Dialog.cancelButton(),
+                  Dialog.warnButton({ label: 'Overwrite' })
+                ]
+              });
+              if (!result.button.accept) {
+                return;
+              }
+            }
+            await convertNotebookToPlainText(
+              contents,
+              notebookPath,
+              serializer,
+              targetExt
+            );
+          } catch (e) {
+            console.error('ptjnb: export failed', e);
+          }
+        }
+      });
+    });
+
+    const exportSubmenu = new MenuSvg({ commands });
+    exportSubmenu.title.label = 'Convert to Plain Text';
+    exportSubmenu.addItem({ command: 'ptjnb:export-parsePy' });
+    exportSubmenu.addItem({ command: 'ptjnb:export-parseSphinxGallery' });
+    exportSubmenu.addItem({ command: 'ptjnb:export-parseClassicMd' });
+    exportSubmenu.addItem({ command: 'ptjnb:export-parseMystMd' });
+
+    contextMenu.addItem({
+      type: 'submenu',
+      submenu: exportSubmenu,
+      selector: '.jp-DirListing-item[data-isdir="false"]',
+      rank: 11
     });
 
     if (cfg.rules?.length) {
