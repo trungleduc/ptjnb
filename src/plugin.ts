@@ -81,6 +81,9 @@ export const plugin: JupyterFrontEndPlugin<void> = {
     }
     const defaultKernelspec: IKernelspec | undefined = cfg.defaultKernelspec;
 
+    await app.serviceManager.kernelspecs.ready;
+    const specs = app.serviceManager.kernelspecs.specs;
+
     const getCurrentBrowser = () => browserFactory.tracker.currentWidget;
 
     // Create the toolbar factory using the standard notebook toolbar
@@ -121,7 +124,8 @@ export const plugin: JupyterFrontEndPlugin<void> = {
         new PlainTextNotebookModelFactory({
           name: modelName,
           parser,
-          serializer
+          serializer,
+          specs
         })
       );
 
@@ -212,7 +216,7 @@ export const plugin: JupyterFrontEndPlugin<void> = {
                 return;
               }
             }
-            await convertFile(contents, filePath, parser, defaultKernelspec);
+            await convertFile(contents, filePath, parser, defaultKernelspec, specs);
           } catch (e) {
             console.error('ptjnb: conversion failed', e);
           }
@@ -319,7 +323,8 @@ export const plugin: JupyterFrontEndPlugin<void> = {
       await autoConvert(
         app.serviceManager.contents,
         cfg.rules,
-        defaultKernelspec
+        defaultKernelspec,
+        specs
       );
     }
   }

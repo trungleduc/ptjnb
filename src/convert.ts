@@ -1,4 +1,4 @@
-import type { Contents } from '@jupyterlab/services';
+import type { Contents, KernelSpec } from '@jupyterlab/services';
 import type { Notebook } from 'plainb';
 import { PARSERS } from './parsers';
 import type { IRule, IKernelspec } from './parsers';
@@ -72,11 +72,47 @@ export function extractKernelspecFromText(text: string): IKernelspec | null {
   return null;
 }
 
+export function kernelspecFromLanguage(
+  specs: KernelSpec.ISpecModels | null,
+  language: string
+): IKernelspec | null {
+  if (!specs || !specs.kernelspecs) {
+    return null;
+  }
+  const normLang = language.toLowerCase();
+  
+  const defaultSpecName = specs.default;
+  if (defaultSpecName) {
+    const defaultSpec = specs.kernelspecs[defaultSpecName];
+    if (defaultSpec && defaultSpec.language.toLowerCase() === normLang) {
+      return {
+        name: defaultSpec.name,
+        display_name: defaultSpec.display_name,
+        language: defaultSpec.language
+      };
+    }
+  }
+
+  for (const name of Object.keys(specs.kernelspecs)) {
+    const spec = specs.kernelspecs[name];
+    if (spec && spec.language.toLowerCase() === normLang) {
+      return {
+        name: spec.name,
+        display_name: spec.display_name,
+        language: spec.language
+      };
+    }
+  }
+
+  return null;
+}
+
 export async function convertFile(
   contents: Contents.IManager,
   filePath: string,
   parser: (text: string) => object,
-  defaultKernelspec?: IKernelspec
+  defaultKernelspec?: IKernelspec,
+  specs?: KernelSpec.ISpecModels | null
 ): Promise<void> {
   const model = await contents.get(filePath, {
     type: 'file',
@@ -85,11 +121,14 @@ export async function convertFile(
   });
   const text = model.content as string;
   const notebook = parser(text) as any;
+
   if (!notebook.metadata?.kernelspec) {
     notebook.metadata = notebook.metadata ?? {};
+    const language = notebook.metadata?.language_info?.name || 'python';
     const kernelspec =
       extractKernelspecFromText(text) ??
       defaultKernelspec ??
+      kernelspecFromLanguage(specs ?? null, language) ??
       DEFAULT_KERNELSPEC;
     notebook.metadata.kernelspec = kernelspec;
     if (!notebook.metadata.language_info) {
@@ -152,7 +191,8 @@ export async function convertIfMissing(
   contents: Contents.IManager,
   filePath: string,
   parser: (text: string) => object,
-  defaultKernelspec?: IKernelspec
+  defaultKernelspec?: IKernelspec,
+  specs?: KernelSpec.ISpecModels | null
 ): Promise<void> {
   const notebookPath = filePath.replace(/\.(py|md)$/, '.ipynb');
   try {
@@ -162,7 +202,7 @@ export async function convertIfMissing(
     /* empty */
   }
   try {
-    await convertFile(contents, filePath, parser, defaultKernelspec);
+    await convertFile(contents, filePath, parser, defaultKernelspec, specs);
   } catch (e) {
     console.error(`ptjnb: failed to convert "${filePath}"`, e);
   }
@@ -172,7 +212,8 @@ async function walkDir(
   contents: Contents.IManager,
   path: string,
   parser: (text: string) => object,
-  defaultKernelspec?: IKernelspec
+  defaultKernelspec?: IKernelspec,
+  specs?: KernelSpec.ISpecModels | null
 ): Promise<void> {
   let dir: Contents.IModel;
   try {
@@ -186,12 +227,12 @@ async function walkDir(
   }
   for (const item of dir.content as Contents.IModel[]) {
     if (item.type === 'directory') {
-      await walkDir(contents, item.path, parser, defaultKernelspec);
+      await walkDir(contents, item.path, parser, defaultKernelspec, specs);
     } else if (
       item.type === 'file' &&
       (item.name.endsWith('.py') || item.name.endsWith('.md'))
     ) {
-      await convertIfMissing(contents, item.path, parser, defaultKernelspec);
+      await convertIfMissing(contents, item.path, parser, defaultKernelspec, specs);
     }
   }
 }
@@ -199,7 +240,8 @@ async function walkDir(
 export async function autoConvert(
   contents: Contents.IManager,
   rules: IRule[],
-  defaultKernelspec?: IKernelspec
+  defaultKernelspec?: IKernelspec,
+  specs?: KernelSpec.ISpecModels | null
 ): Promise<void> {
   for (const rule of rules) {
     const parser = PARSERS[rule.parser];
@@ -207,6 +249,6 @@ export async function autoConvert(
       console.warn(`ptjnb: unknown parser "${rule.parser}"`);
       continue;
     }
-    await walkDir(contents, rule.dir, parser, defaultKernelspec);
+    await walkDir(contents, rule.dir, parser, defaultKernelspec, specs);
   }
 }
