@@ -80,6 +80,10 @@ jobs:
           jlpm
           python -m pip install .
 
+      - name: Force a change to snapshots to prevent empty commit failures
+        run: |
+          echo "$(date)" > ui-tests/ptjnb.spec.ts-snapshots/timestamp.txt
+
       - uses: jupyterlab/maintainer-tools/.github/actions/update-snapshots@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
