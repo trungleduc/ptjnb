@@ -7,7 +7,9 @@ async function waitForFileBrowser(page: Page): Promise<void> {
   // Ensure the file browser tab is active (it can be collapsed on smaller viewports)
   const tab = page.locator('.lm-TabBar-tab[data-id="filebrowser"]');
   await tab.waitFor({ timeout: FILE_BROWSER_TIMEOUT });
-  const isCurrent = await tab.evaluate((el) => el.classList.contains('lm-mod-current'));
+  const isCurrent = await tab.evaluate(el =>
+    el.classList.contains('lm-mod-current')
+  );
   if (!isCurrent) {
     await tab.click();
   }

@@ -1,6 +1,10 @@
 import { parsePy } from 'plainb';
 import { PARSERS } from '../parsers';
-import { convertIfMissing, extractKernelspecFromText, kernelspecFromLanguage } from '../convert';
+import {
+  convertIfMissing,
+  extractKernelspecFromText,
+  kernelspecFromLanguage
+} from '../convert';
 
 describe('PARSERS registry', () => {
   it('contains all 4 parsers and each is a function', () => {
@@ -139,7 +143,13 @@ describe('kernelspecFromLanguage', () => {
     const specs = {
       default: 'python3',
       kernelspecs: {
-        python3: { name: 'python3', display_name: 'Python 3', language: 'python', argv: [], resources: {} }
+        python3: {
+          name: 'python3',
+          display_name: 'Python 3',
+          language: 'python',
+          argv: [],
+          resources: {}
+        }
       }
     } as any;
     expect(kernelspecFromLanguage(specs, 'r')).toBeNull();
@@ -149,8 +159,20 @@ describe('kernelspecFromLanguage', () => {
     const specs = {
       default: 'python3',
       kernelspecs: {
-        python3: { name: 'python3', display_name: 'Python 3', language: 'python', argv: [], resources: {} },
-        xpython: { name: 'xpython', display_name: 'XPython', language: 'python', argv: [], resources: {} }
+        python3: {
+          name: 'python3',
+          display_name: 'Python 3',
+          language: 'python',
+          argv: [],
+          resources: {}
+        },
+        xpython: {
+          name: 'xpython',
+          display_name: 'XPython',
+          language: 'python',
+          argv: [],
+          resources: {}
+        }
       }
     } as any;
     const ks = kernelspecFromLanguage(specs, 'python');
@@ -162,8 +184,20 @@ describe('kernelspecFromLanguage', () => {
     const specs = {
       default: 'python3',
       kernelspecs: {
-        python3: { name: 'python3', display_name: 'Python 3', language: 'python', argv: [], resources: {} },
-        ir: { name: 'ir', display_name: 'R', language: 'r', argv: [], resources: {} }
+        python3: {
+          name: 'python3',
+          display_name: 'Python 3',
+          language: 'python',
+          argv: [],
+          resources: {}
+        },
+        ir: {
+          name: 'ir',
+          display_name: 'R',
+          language: 'r',
+          argv: [],
+          resources: {}
+        }
       }
     } as any;
     const ks = kernelspecFromLanguage(specs, 'r');
@@ -176,7 +210,13 @@ describe('kernelspecFromLanguage', () => {
     const specs = {
       default: 'ir',
       kernelspecs: {
-        ir: { name: 'ir', display_name: 'R', language: 'R', argv: [], resources: {} }
+        ir: {
+          name: 'ir',
+          display_name: 'R',
+          language: 'R',
+          argv: [],
+          resources: {}
+        }
       }
     } as any;
     const ks = kernelspecFromLanguage(specs, 'r');
