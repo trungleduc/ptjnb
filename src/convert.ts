@@ -181,7 +181,8 @@ export async function convertNotebookToPlainText(
   }
 
   const text = serializer(notebook as Notebook);
-  const plainPath = outPath ?? notebookPath.replace(/\.ipynb$/, targetExtension);
+  const plainPath =
+    outPath ?? notebookPath.replace(/\.ipynb$/, targetExtension);
   await contents.save(plainPath, {
     type: 'file',
     format: 'text',

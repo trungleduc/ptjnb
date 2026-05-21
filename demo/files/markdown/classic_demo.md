@@ -1,6 +1,20 @@
 ---
-kernelspec: {"name":"xpython","display_name":"Python 3.14 (XPython)","language":"python"}
-language_info: {"name":"python","version":"3.14.4","mimetype":"text/x-python","codemirror_mode":{"name":"ipython","version":3},"pygments_lexer":"ipython3","nbconvert_exporter":"python","file_extension":".py"}
+kernelspec:
+  {
+    'name': 'xpython',
+    'display_name': 'Python 3.14 (XPython)',
+    'language': 'python'
+  }
+language_info:
+  {
+    'name': 'python',
+    'version': '3.14.4',
+    'mimetype': 'text/x-python',
+    'codemirror_mode': { 'name': 'ipython', 'version': 3 },
+    'pygments_lexer': 'ipython3',
+    'nbconvert_exporter': 'python',
+    'file_extension': '.py'
+  }
 ---
 
 # Classic Markdown Notebook
@@ -44,4 +58,3 @@ print("Word count:", len(words))
 
 The classic Markdown format is the simplest way to write a notebook as plain text.
 Just write normal Markdown — fenced code blocks become runnable cells automatically.
-

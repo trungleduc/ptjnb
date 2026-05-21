@@ -208,7 +208,8 @@ export const plugin: JupyterFrontEndPlugin<void> = {
             if (fileExists) {
               const renameResult = await InputDialog.getText({
                 title: 'File already exists',
-                label: 'A notebook with this name already exists. Choose a new name or keep the same to overwrite:',
+                label:
+                  'A notebook with this name already exists. Choose a new name or keep the same to overwrite:',
                 text: finalNotebookPath
               });
               if (!renameResult.button.accept || !renameResult.value) {
@@ -303,7 +304,8 @@ export const plugin: JupyterFrontEndPlugin<void> = {
             if (fileExists) {
               const renameResult = await InputDialog.getText({
                 title: 'File already exists',
-                label: 'A file with this name already exists. Choose a new name or keep the same to overwrite:',
+                label:
+                  'A file with this name already exists. Choose a new name or keep the same to overwrite:',
                 text: finalPlainPath
               });
               if (!renameResult.button.accept || !renameResult.value) {
