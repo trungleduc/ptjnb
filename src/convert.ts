@@ -62,7 +62,7 @@ export function extractKernelspecFromText(text: string): IKernelspec | null {
       }
       const m = content.match(/^(\w+):\s*(.+)$/);
       if (m) {
-        ks[m[1]] = m[2];
+        ks[m[1]] = m[2].replace(/^["']|["']$/g, '');
       }
     }
   }
@@ -112,7 +112,8 @@ export async function convertFile(
   filePath: string,
   parser: (text: string) => object,
   defaultKernelspec?: IKernelspec,
-  specs?: KernelSpec.ISpecModels | null
+  specs?: KernelSpec.ISpecModels | null,
+  outPath?: string
 ): Promise<void> {
   const model = await contents.get(filePath, {
     type: 'file',
@@ -135,7 +136,7 @@ export async function convertFile(
       notebook.metadata.language_info = { name: kernelspec.language };
     }
   }
-  const notebookPath = filePath.replace(/\.(py|md)$/, '.ipynb');
+  const notebookPath = outPath ?? filePath.replace(/\.(py|md)$/, '.ipynb');
   await contents.save(notebookPath, {
     type: 'notebook',
     format: 'json',
@@ -150,7 +151,8 @@ export async function convertNotebookToPlainText(
   contents: Contents.IManager,
   notebookPath: string,
   serializer: (notebook: Notebook) => string,
-  targetExtension: string
+  targetExtension: string,
+  outPath?: string
 ): Promise<void> {
   const model = await contents.get(notebookPath, {
     type: 'notebook',
@@ -179,7 +181,7 @@ export async function convertNotebookToPlainText(
   }
 
   const text = serializer(notebook as Notebook);
-  const plainPath = notebookPath.replace(/\.ipynb$/, targetExtension);
+  const plainPath = outPath ?? notebookPath.replace(/\.ipynb$/, targetExtension);
   await contents.save(plainPath, {
     type: 'file',
     format: 'text',
