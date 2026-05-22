@@ -6,7 +6,6 @@ import { DocumentRegistry } from '@jupyterlab/docregistry';
 import {
   showDialog,
   Dialog,
-  InputDialog,
   createToolbarFactory,
   IToolbarWidgetRegistry
 } from '@jupyterlab/apputils';
@@ -197,37 +196,24 @@ export const plugin: JupyterFrontEndPlugin<void> = {
           const notebookPath = filePath.replace(/\.(py|md)$/, '.ipynb');
           const contents = app.serviceManager.contents;
           try {
-            let finalNotebookPath = notebookPath;
             let fileExists = false;
             try {
-              await contents.get(finalNotebookPath, { content: false });
+              await contents.get(notebookPath, { content: false });
               fileExists = true;
             } catch {
               /* empty */
             }
             if (fileExists) {
-              const renameResult = await InputDialog.getText({
-                title: 'File already exists',
-                label:
-                  'A notebook with this name already exists. Choose a new name or keep the same to overwrite:',
-                text: finalNotebookPath
+              const result = await showDialog({
+                title: 'Overwrite notebook?',
+                body: `"${notebookPath}" already exists. Overwrite it?`,
+                buttons: [
+                  Dialog.cancelButton(),
+                  Dialog.warnButton({ label: 'Overwrite' })
+                ]
               });
-              if (!renameResult.button.accept || !renameResult.value) {
+              if (!result.button.accept) {
                 return;
-              }
-              finalNotebookPath = renameResult.value;
-              if (finalNotebookPath === notebookPath) {
-                const result = await showDialog({
-                  title: 'Overwrite notebook?',
-                  body: `"${finalNotebookPath}" already exists. Overwrite it?`,
-                  buttons: [
-                    Dialog.cancelButton(),
-                    Dialog.warnButton({ label: 'Overwrite' })
-                  ]
-                });
-                if (!result.button.accept) {
-                  return;
-                }
               }
             }
             await convertFile(
@@ -235,8 +221,7 @@ export const plugin: JupyterFrontEndPlugin<void> = {
               filePath,
               parser,
               defaultKernelspec,
-              specs,
-              finalNotebookPath
+              specs
             );
           } catch (e) {
             console.error('ptjnb: conversion failed', e);
@@ -293,45 +278,31 @@ export const plugin: JupyterFrontEndPlugin<void> = {
           const plainPath = notebookPath.replace(/\.ipynb$/, targetExt);
           const contents = app.serviceManager.contents;
           try {
-            let finalPlainPath = plainPath;
             let fileExists = false;
             try {
-              await contents.get(finalPlainPath, { content: false });
+              await contents.get(plainPath, { content: false });
               fileExists = true;
             } catch {
               // file does not exist
             }
             if (fileExists) {
-              const renameResult = await InputDialog.getText({
-                title: 'File already exists',
-                label:
-                  'A file with this name already exists. Choose a new name or keep the same to overwrite:',
-                text: finalPlainPath
+              const result = await showDialog({
+                title: 'Overwrite file?',
+                body: `"${plainPath}" already exists. Overwrite it?`,
+                buttons: [
+                  Dialog.cancelButton(),
+                  Dialog.warnButton({ label: 'Overwrite' })
+                ]
               });
-              if (!renameResult.button.accept || !renameResult.value) {
+              if (!result.button.accept) {
                 return;
-              }
-              finalPlainPath = renameResult.value;
-              if (finalPlainPath === plainPath) {
-                const result = await showDialog({
-                  title: 'Overwrite file?',
-                  body: `"${finalPlainPath}" already exists. Overwrite it?`,
-                  buttons: [
-                    Dialog.cancelButton(),
-                    Dialog.warnButton({ label: 'Overwrite' })
-                  ]
-                });
-                if (!result.button.accept) {
-                  return;
-                }
               }
             }
             await convertNotebookToPlainText(
               contents,
               notebookPath,
               serializer,
-              targetExt,
-              finalPlainPath
+              targetExt
             );
           } catch (e) {
             console.error('ptjnb: export failed', e);
