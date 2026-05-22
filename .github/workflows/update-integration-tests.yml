@@ -72,7 +72,7 @@ jobs:
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
 
       - name: Install dependencies
-        run: python -m pip install -U "jupyterlab>=4.0.0,<5" jupyterlite-core jupyterlite-xeus>=4.4.0
+        run: python -m pip install -U "jupyterlab>=4.0.0,<5"
 
       - name: Install extension
         run: |
@@ -80,42 +80,10 @@ jobs:
           jlpm
           python -m pip install .
 
-      - name: Build JupyterLite site
-        working-directory: demo
-        run: jupyter lite build .
-
-      - name: Serve JupyterLite
-        run: python -m http.server 4477 --directory ./demo/_output &
-
-      - name: Wait for JupyterLite to be ready
-        run: curl --retry 15 --retry-delay 2 --retry-all-errors -sf http://localhost:4477/lab > /dev/null
-
-      - name: Install Playwright and update snapshots
-        working-directory: ui-tests
-        continue-on-error: true
-        run: |
-          jlpm install
-          npx playwright install-deps || true
-          npx playwright install chromium
-          jlpm run test:update
-
-      - name: Compress new/modified snapshots
-        run: |
-          sudo apt-get install -y -q optipng
-          git ls-files --exclude-standard -om -- '*.png' | xargs -r optipng
-
-      - name: Upload snapshots artifact
-        uses: actions/upload-artifact@v4
+      - uses: jupyterlab/maintainer-tools/.github/actions/update-snapshots@v1
         with:
-          name: playwright-snapshots
-          path: ui-tests/**/*-snapshots/*.*
-
-      - name: Commit and push updated snapshots
-        working-directory: ui-tests
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email 'github-actions[bot]@users.noreply.github.com'
-          git pull --no-tags
-          git add ptjnb.spec.ts-snapshots/
-          git diff --cached --quiet && echo 'No snapshot changes to commit.' || git commit -m 'Update Playwright Snapshots'
-          git push
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          # Playwright knows how to start JupyterLab server
+          start_server_script: 'null'
+          test_folder: ui-tests
+          npm_client: jlpm
