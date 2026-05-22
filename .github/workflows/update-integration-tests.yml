@@ -72,13 +72,23 @@ jobs:
         uses: jupyterlab/maintainer-tools/.github/actions/base-setup@v1
 
       - name: Install dependencies
-        run: python -m pip install -U "jupyterlab>=4.0.0,<5"
+        run: python -m pip install -U "jupyterlab>=4.0.0,<5" jupyterlite-core jupyterlite-xeus>=4.4.0
 
       - name: Install extension
         run: |
           set -eux
           jlpm
           python -m pip install .
+
+      - name: Build JupyterLite site
+        working-directory: demo
+        run: jupyter lite build .
+
+      - name: Serve JupyterLite
+        run: python -m http.server 4477 --directory ./demo/_output &
+
+      - name: Wait for JupyterLite to be ready
+        run: curl --retry 15 --retry-delay 2 --retry-all-errors -sf http://localhost:4477/lab > /dev/null
 
       - name: Force a change to snapshots to prevent empty commit failures
         run: |
