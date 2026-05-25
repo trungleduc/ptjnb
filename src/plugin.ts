@@ -86,9 +86,7 @@ export const plugin: JupyterFrontEndPlugin<void> = {
 
     const getCurrentBrowser = () => browserFactory.tracker.currentWidget;
 
-    // Create the toolbar factory using the standard notebook toolbar
-    // configuration. This reuses toolbar items registered under the
-    // 'Notebook' factory name (save, cell type, kernel name, etc.).
+    // Reuse toolbar items from standard notebook factory
     const toolbarFactory = settingRegistry
       ? createToolbarFactory(
           toolbarRegistry,
@@ -112,7 +110,6 @@ export const plugin: JupyterFrontEndPlugin<void> = {
       const modelName = `ptjnb-model-${parserName}`.toLowerCase();
       const widgetFactoryName = CONTEXT_MENU_LABELS[parserName];
 
-      // Register file type so our widget factory appears in the "open with" menu
       app.docRegistry.addFileType({
         name: fileTypeName,
         extensions: exts,
@@ -144,7 +141,6 @@ export const plugin: JupyterFrontEndPlugin<void> = {
       });
 
       // Register each created panel with the notebook tracker.
-      // Call inject() for the pool, then register with _focusTracker.
       widgetFactory.widgetCreated.connect((_sender, widget) => {
         widget.id = widget.id || `ptjnb-${++ptjnbId}`;
         widget.title.icon = undefined;
@@ -160,8 +156,7 @@ export const plugin: JupyterFrontEndPlugin<void> = {
         widgetFactory as unknown as DocumentRegistry.WidgetFactory
       );
 
-      // Copy any other widget extensions (e.g. TOC, search provider) from
-      // the standard Notebook factory. Deferred until after app.restored.
+      // Copy any other widget extensions
       void app.restored.then(() => {
         for (const ext of app.docRegistry.widgetExtensions('Notebook')) {
           app.docRegistry.addWidgetExtension(widgetFactoryName, ext);

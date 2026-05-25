@@ -22,7 +22,7 @@ function fileItem(page: Page, name: string) {
   return page.locator('.jp-DirListing-item').filter({ hasText: name }).first();
 }
 
-async function openNotebookSubmenu(
+async function openConvertSubmenu(
   page: Page,
   fileName: string
 ): Promise<void> {
@@ -87,7 +87,7 @@ test.describe('ptjnb', () => {
   });
 
   test('converts .py to .ipynb when no sibling exists', async ({ page }) => {
-    await openNotebookSubmenu(page, 'complicated.py');
+    await openConvertSubmenu(page, 'complicated.py');
     await page
       .locator('.lm-Menu-itemLabel')
       .filter({ hasText: 'Percent format (.py)' })
@@ -105,7 +105,7 @@ test.describe('ptjnb', () => {
     await expect(fileItem(page, 'numpy_demo.ipynb')).toBeVisible({
       timeout: CONVERT_TIMEOUT
     });
-    await openNotebookSubmenu(page, 'numpy_demo.py');
+    await openConvertSubmenu(page, 'numpy_demo.py');
     await page
       .locator('.lm-Menu-itemLabel')
       .filter({ hasText: 'Percent format (.py)' })
@@ -123,7 +123,7 @@ test.describe('ptjnb', () => {
     await expect(fileItem(page, 'numpy_demo.ipynb')).toBeVisible({
       timeout: CONVERT_TIMEOUT
     });
-    await openNotebookSubmenu(page, 'numpy_demo.py');
+    await openConvertSubmenu(page, 'numpy_demo.py');
     await page
       .locator('.lm-Menu-itemLabel')
       .filter({ hasText: 'Percent format (.py)' })
@@ -259,7 +259,7 @@ test.describe('ptjnb export', () => {
     const pyFile = fileItem(page, 'complicated.py');
     await expect(pyFile).toBeVisible({ timeout: FILE_BROWSER_TIMEOUT });
 
-    await openNotebookSubmenu(page, 'complicated.py');
+    await openConvertSubmenu(page, 'complicated.py');
     await page
       .locator('.lm-Menu-itemLabel')
       .filter({ hasText: 'Percent format (.py)' })

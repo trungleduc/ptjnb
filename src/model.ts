@@ -29,15 +29,11 @@ export class PlainTextNotebookModel extends NotebookModel {
   toString(): string {
     const json = super.toJSON() as any;
 
-    // Normalize cell sources to string[] as expected by plainb serializers.
-    // NotebookModel.toJSON() returns source as a single string, but plainb's
-    // joinSource() calls source.join("") which requires an array.
+    // Normalize cell sources to string[]
     if (json.cells) {
       for (const cell of json.cells) {
         if (typeof cell.source === 'string') {
           // Split into lines preserving trailing \n on each line
-          // (the nbformat convention for multiline string arrays).
-          // e.g. "a\nb\nc" → ["a\n", "b\n", "c"]
           const lines = cell.source.split('\n');
           cell.source = lines.map((line: string, i: number) =>
             i < lines.length - 1 ? line + '\n' : line
@@ -59,7 +55,7 @@ export class PlainTextNotebookModel extends NotebookModel {
   fromString(value: string): void {
     const notebook = this._parser(value) as any;
 
-    // Ensure kernelspec is set, otherwise default JupyterLab notebook widget might fail to start
+    // Ensure kernelspec is set
     if (!notebook.metadata?.kernelspec) {
       notebook.metadata = notebook.metadata ?? {};
       const language = notebook.metadata?.language_info?.name || 'python';
@@ -105,11 +101,11 @@ export class PlainTextNotebookModelFactory extends NotebookModelFactory {
   }
 
   get contentType(): Contents.ContentType {
-    return 'file'; // Crucial: load as plain text, not JSON
+    return 'file';
   }
 
   get fileFormat(): Contents.FileFormat {
-    return 'text'; // Crucial: load as plain text, not JSON
+    return 'text';
   }
 
   createNew(
