@@ -5,7 +5,7 @@ language_info:
   pygments_lexer: r
   mimetype: text/x-r-source
   file_extension: .r
-  version: "4.5.1"
+  version: '4.5.1'
 ---
 
 # R Kernel Auto-detect Test
